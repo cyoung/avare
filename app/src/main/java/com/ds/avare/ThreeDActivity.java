@@ -72,6 +72,7 @@ public class ThreeDActivity extends Activity implements IRajawaliDisplay {
 
     /*
      * Start GPS
+     * GPS will be used to obtain camera position.
      */
     private GpsInterface mGpsInfc = new GpsInterface() {
 
@@ -91,6 +92,7 @@ public class ThreeDActivity extends Activity implements IRajawaliDisplay {
                 return;
             }
             // Get the elevation tile for terrain
+            // XXX: crashes when tile is not available
             ElevationTile etile = mService.getElevationTile();
             if(etile == null) {
                 return;
@@ -104,17 +106,21 @@ public class ThreeDActivity extends Activity implements IRajawaliDisplay {
             double offsx = tile.getOffsetX(lon);
             double offsy = tile.getOffsetY(lat);
 
-            // New terrain, set it
+            // New terrain tile?, set it
             if(!tile.getName().equals(mLastTileName)) {
                 BitmapHolder bmp = etile.getElevationBitmap();
                 if(bmp.getBitmap() != null) {
                     mLastTileName = tile.getName();
+                    // Terrain has changed since elevation tile has changed.
+                    // This has the issue that it is only one tile, and the airplane has to reach its boundary to get to next tile.
+                    // With newer tiles under work, 9 tiles will be loaded and swapped
                     ((TerrainRenderer) mRenderer).addTerrain(bmp.getBitmap());
                 }
             }
 
             // find height from GPS and put in y, 50 for test
             mAirplane.setPosition(offsx, 50, offsy);
+            // We want to look in the direction we are travelling in. We could use swipe/touch to move the "head" around.
             mChaseCamera.setCameraYaw(track);
 
 
@@ -176,6 +182,7 @@ public class ThreeDActivity extends Activity implements IRajawaliDisplay {
 
     /** Defines callbacks for service binding, passed to bindService() */
     /**
+     * Service that maintains tiles and GPS on
      *
      */
     private ServiceConnection mConnection = new ServiceConnection() {
@@ -201,6 +208,8 @@ public class ThreeDActivity extends Activity implements IRajawaliDisplay {
         public void onServiceDisconnected(ComponentName arg0) {
         }
     };
+
+
     /* (non-Javadoc)
      * @see android.app.Activity#onResume()
      */
@@ -263,6 +272,7 @@ public class ThreeDActivity extends Activity implements IRajawaliDisplay {
 
         @Override
         public void onTouchEvent(MotionEvent event) {
+            // Must call from activity's onTouch otherwise wont get touch here
         }
 
 
@@ -282,12 +292,15 @@ public class ThreeDActivity extends Activity implements IRajawaliDisplay {
                 getCurrentScene().removeChild(mTerrain);
             }
             //
-            // -- Load a bitmap that represents the terrainbw. Its color values will
+            // -- Load a bitmap that represents the terrain. Its color values will
             //    be used to generate heights.
-            //
+            // Alpha = unused
+            // Red = temperature
+            // Green = height
+            // Blue = unused
 
             //
-            // -- A normal map material will give the terrainbw a bit more detail.
+            // -- A normal map material will give the terrain a bit more detail.
             //
             Material material = new Material();
             material.enableLighting(true);
@@ -307,7 +320,7 @@ public class ThreeDActivity extends Activity implements IRajawaliDisplay {
                 SquareTerrain.Parameters terrainParams = SquareTerrain.createParameters(bmp);
                 // -- set terrain scale, this needs to be found from tile projection
                 terrainParams.setScale(4f, 160f, 4f);
-                // -- the number of plane subdivisions
+                // -- the number of plane subdivisions, set it to tile resolution for 1:1 mapping
                 terrainParams.setDivisions(512);
                 // -- the number of times the textures should be repeated
                 terrainParams.setTextureMult(4);
@@ -341,24 +354,24 @@ public class ThreeDActivity extends Activity implements IRajawaliDisplay {
 
             //
             // -- Use a chase camera that follows and invisible object
-            //    and add fog for a nice effect.
+            //
             //
 
             mChaseCamera = new ChaseCamera(new Vector3(0, 0, 0));
             mChaseCamera.setFarPlane(1024);
             getCurrentScene().replaceAndSwitchCamera(mChaseCamera, 0);
 
-
+            // add light for our scene
             DirectionalLight light = new DirectionalLight(0f, 10f, 0f);
             light.setPower(1f);
             getCurrentScene().addLight(light);
 
             //
-            // -- The empty object that will move along a curve and that
+            // -- The empty object that will move along flight path and that
             //    will be followed by the camera
             //
             mAirplane = new Sphere(1, 2, 2);
-            mAirplane.setVisible(false);
+            mAirplane.setVisible(false); // dont show it as it is pilot's eye
             mAirplane.setPosition(0, 0, 0);
 
             //
