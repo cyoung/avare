@@ -899,6 +899,10 @@ public class Preferences {
             mTabs |= 1 << MainActivity.tabChecklist;
         }
 
+        if (mPref.getBoolean(mContext.getString(R.string.prefTab3D), true)) {
+            mTabs |= 1 << MainActivity.tab3D;
+        }
+
         if (mPref.getBoolean(mContext.getString(R.string.prefTabTools), true)) {
             mTabs |= 1 << MainActivity.tabTools;
         }

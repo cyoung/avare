@@ -362,6 +362,7 @@ Redistribution and use in source and binary forms, with or without modification,
 	<string name="prefTabWX">&quot;prefTabWX&quot;</string>
 	<string name="prefTabNear">&quot;prefTabNear&quot;</string>
 	<string name="prefTabChecklist">&quot;prefTabChecklist&quot;</string>
+    <string name="prefTab3D">&quot;prefTab3D&quot;</string>
     <string name="prefTabTools">&quot;prefTabTools&quot;</string>
     <string name="prefTabTrip">&quot;prefTabTrip&quot;</string>
     
@@ -502,5 +503,7 @@ Redistribution and use in source and binary forms, with or without modification,
     <string name="CrashLabel">Avare has stopped unexpectedly!</string>
     <string name="VerifyPlates">&quot;Verify plates at http://avare.openaircraft.com&quot;</string>
 
+
+    <string name="ThreeD">3D</string>
 
 </resources>
